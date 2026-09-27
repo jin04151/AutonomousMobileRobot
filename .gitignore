@@ -1,0 +1,4 @@
+/**/logs/
+/**/maps/
+__pycache__/
+*.py[cod]

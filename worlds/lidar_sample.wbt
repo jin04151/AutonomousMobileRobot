@@ -1,0 +1,413 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+
+WorldInfo {
+  info [
+    "Example use of a rotating Lidar in point-cloud mode."
+  ]
+  title "Lidar Point-Cloud"
+  basicTimeStep 8
+  lineScale 0.15
+}
+Viewpoint {
+  orientation 0.41905150105616645 0.5694481023613379 -0.7071949506180352 1.7248726336988245
+  position -0.277820066728904 8.899371383954335 17.470129530793173
+  follow "MyBot"
+  followType "None"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 10 10
+  wallThickness 0.5
+  wallHeight 1.4
+}
+DEF GREEN_OBJECT1 Solid {
+  translation 4.59986 -0.107182 0.2
+  rotation 0 0 1 3.13621
+  children [
+    DEF BOX_SHAPE Shape {
+      appearance PBRAppearance {
+        baseColor 0 1 0
+        roughness 0.2189099510000001
+        metalness 0
+      }
+      geometry Box {
+        size 0.4 0.8 0.4
+      }
+    }
+  ]
+  name "green object 1"
+  boundingObject USE BOX_SHAPE
+}
+DEF GREEN_OBJECT3 Solid {
+  translation 1.98416 -0.92598 0.2
+  rotation 0 0 1 3.13621
+  children [
+    USE BOX_SHAPE
+  ]
+  name "green object 3"
+  boundingObject USE BOX_SHAPE
+}
+DEF GREEN_OBJECT4 Solid {
+  translation 3.06808 -4.4843 0.3
+  rotation 0 0 1 3.13621
+  children [
+    Transform {
+      scale 1.6009 1.6009 1.6009
+      children [
+        USE BOX_SHAPE
+      ]
+    }
+  ]
+  name "green object 4"
+  boundingObject USE BOX_SHAPE
+}
+DEF GREEN_OBJECT5 Solid {
+  translation -4.54662 -2.18975 0.3
+  rotation 0 0 1 -2.623375
+  children [
+    Transform {
+      scale 1.80916 1.80916 1.80916
+      children [
+        USE BOX_SHAPE
+      ]
+    }
+  ]
+  name "green object 5"
+  boundingObject USE BOX_SHAPE
+}
+DEF BLUE_OBJECT1 Solid {
+  translation -3.94731 4.35623 0.37
+  rotation -0.6958897140492328 0.5078077913347121 0.5078077913347121 -1.925669
+  children [
+    Transform {
+      scale 1.63795 1.63795 1.63795
+      children [
+        DEF SPHERE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColor 0 0 1
+            roughness 0.519341125
+            metalness 0
+          }
+          geometry Sphere {
+            radius 0.35
+            subdivision 2
+          }
+        }
+      ]
+    }
+  ]
+  name "blue object 1"
+  boundingObject USE SPHERE_SHAPE
+}
+DEF BLUE_OBJECT2 Solid {
+  translation 0.406582 -2.81677 0.5
+  rotation -0.6958897140492328 0.5078077913347121 0.5078077913347121 -1.925669
+  children [
+    Transform {
+      scale 1.66973 1.66973 1.66973
+      children [
+        USE SPHERE_SHAPE
+      ]
+    }
+  ]
+  name "blue object 2"
+  boundingObject USE SPHERE_SHAPE
+}
+DEF BLUE_OBJECT3 Solid {
+  translation -2.33651 0.0413725 0.27
+  rotation -0.5652341910457974 0.4124661394111039 0.714410241466416 -1.592006
+  children [
+    Transform {
+      scale 1.64056 1.64056 1.64056
+      children [
+        USE SPHERE_SHAPE
+      ]
+    }
+  ]
+  name "blue object 3"
+  boundingObject USE SPHERE_SHAPE
+}
+DEF PINK_OBJECT1 Solid {
+  translation 1.8848 1.5955 0.55
+  children [
+    Transform {
+      scale 1.46599 1.46599 1.46599
+      children [
+        DEF CYLINDER_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColor 1 0.1 0.3
+            roughness 0.16827074099999995
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.8
+            radius 0.3
+            subdivision 20
+          }
+        }
+      ]
+    }
+  ]
+  name "pink object 1"
+  boundingObject USE CYLINDER_SHAPE
+}
+DEF PINK_OBJECT2 Solid {
+  translation -0.3676 3.1247 0.47
+  children [
+    Transform {
+      scale 1.34833 1.34833 1.34833
+      children [
+        USE CYLINDER_SHAPE
+      ]
+    }
+  ]
+  name "pink object 2"
+  boundingObject USE CYLINDER_SHAPE
+}
+DEF PINK_OBJECT3 Solid {
+  translation -2.9229 -3.0776 0.54
+  children [
+    Transform {
+      scale 1.51649 1.51649 1.51649
+      children [
+        USE CYLINDER_SHAPE
+      ]
+    }
+  ]
+  name "pink object 3"
+  boundingObject USE CYLINDER_SHAPE
+}
+DEF ROBOT Robot {
+  translation 2.621371742315262 3.840128834128389 -0.00011751080145139259
+  rotation 0.01626495116012965 0.0005077325629336231 0.9998675880192354 -3.079104372717208
+  children [
+    Pose {
+      translation 0 0 0.1245
+      rotation 0 0 1 -1.570796
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.74902 0.74902 0.74902
+            roughness 1
+            metalness 0
+          }
+          geometry DEF BODY Cylinder {
+            height 0.24
+            radius 0.135
+          }
+        }
+      ]
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 302.03808763758985
+        axis 0 1 0
+        anchor 0 0 0.075
+      }
+      device [
+        RotationalMotor {
+          name "left wheel motor"
+          consumptionFactor 70
+          maxVelocity 100
+        }
+        PositionSensor {
+          name "left wheel sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0.13499999999999931 0.075
+        rotation -0.08602858680831083 0.08602864464626092 -0.9925714858649185 1.5782522432283643
+        children [
+          DEF WHEEL Pose {
+            rotation 0.577656895078166 0.5771968951617173 -0.5771968951617173 -2.093935
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.301961 0.301961 0.301961
+                  roughness 1
+                  metalness 0
+                }
+                geometry Cylinder {
+                  height 0.03
+                  radius 0.075
+                }
+              }
+            ]
+          }
+        ]
+        name "left wheel"
+        boundingObject USE WHEEL
+        physics DEF PHYSICS_WHEEL Physics {
+          density -1
+          mass 0.05
+        }
+        linearVelocity -0.14970549436432437 -0.009366315867282794 2.331005248094941e-06
+        angularVelocity 0.1248940245319173 -1.996096392325117 2.9327674971855953e-06
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 351.30476942257667
+        axis 0 1 0
+        anchor 0 0 0.075
+      }
+      device [
+        RotationalMotor {
+          name "right wheel motor"
+          consumptionFactor 70
+          maxVelocity 100
+        }
+        PositionSensor {
+          name "right wheel sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 -0.13499999999999915 0.075
+        rotation 0.20799766128428945 -0.20799763751798897 -0.9557583144745334 1.6160311869070292
+        children [
+          USE WHEEL
+        ]
+        name "right wheel"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+        linearVelocity -0.1497076232973481 -0.009366449241596098 -2.315849539735354e-06
+        angularVelocity 0.1248942315974588 -1.9960966976757424 1.392252316438184e-06
+      }
+    }
+    DEF LIDAR Lidar {
+      translation 0 0 0.45
+      children [
+        Transform {
+          translation 0 0 -0.01
+          rotation 0 0 -1 1.570796
+          scale 6 5 3
+          children [
+            DEF STRUCTURE_AXES Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0.02 0.02 0.02
+                }
+              }
+              geometry IndexedLineSet {
+                coord Coordinate {
+                  point [
+                    0 0 0.01
+                    0.01 0 -0.08
+                    -0.01 0 -0.08
+                    0 0.01 -0.08
+                    0 -0.01 -0.08
+                  ]
+                }
+                coordIndex [
+                  0, 1, 0, 2, 0, 3, 0, 4
+                ]
+              }
+            }
+          ]
+        }
+      ]
+      tiltAngle -0.1
+      horizontalResolution 256
+      fieldOfView 1.57
+      numberOfLayers 6
+      near 0.05
+      minRange 0.05
+      maxRange 8
+      type "rotating"
+      noise 0.1
+      defaultFrequency 2
+      rotatingHead Solid {
+        rotation 0 0 0.9999999999999999 2.2619467105846542
+        children [
+          Pose {
+            translation 0.03 0 0
+            rotation 0 0 1 3.14159
+            children [
+              DEF LENS Shape {
+                appearance PBRAppearance {
+                  baseColor 0 0 0
+                  roughness 1.1102230246251565e-16
+                  metalness 0
+                }
+                geometry Sphere {
+                  radius 0.015
+                  subdivision 2
+                }
+              }
+            ]
+          }
+          DEF CAMERA_SHAPE Pose {
+            rotation -0.5771978956908259 0.5776548956082386 0.5771978956908259 -2.093935
+            children [
+              DEF CAMERA_OUTLINE Shape {
+                appearance PBRAppearance {
+                  baseColor 0.898039 0.898039 0.898039
+                  roughness 1
+                  metalness 0
+                }
+                geometry Cylinder {
+                  height 0.06
+                  radius 0.024
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+    DEF FRONT_CAMERA Camera {
+      translation 0.14 0 0.27
+      fieldOfView 1.0472
+      width 320
+      height 240
+    }
+    DEF GYRO Gyro {
+    }
+    DEF ACCELEROMETER Accelerometer {
+    }
+    DEF COMPASS Compass {
+    }
+  ]
+  name "MyBot"
+  boundingObject Pose {
+    translation 0 0 0.1245
+    rotation 0 0 1 -1.570796
+    children [
+      USE BODY
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 1.5
+    centerOfMass [
+      0 0 0.15
+    ]
+  }
+  controller "lidar"
+  linearVelocity -0.14970664853713928 -0.009365057078267227 7.728674319080545e-09
+  angularVelocity -1.7518323200680846e-05 -1.1941337198696724e-06 5.030292095044833e-06
+}
+DEF DEBUG_OBSERVER Robot {
+  name "diagnostic observer"
+  controller "truth_logger"
+  supervisor TRUE
+}
+Wall {
+  translation 1.55 2.74 0
+  rotation 0 0 1 -1.5707953071795862
+  size 0.2 7 1.5
+}
+Wall {
+  translation -1.51 -0.67 0
+  rotation 0 0 1 -1.5707953071795862
+  name "wall(1)"
+  size 0.2 7 1.5
+}
