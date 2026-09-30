@@ -571,6 +571,67 @@ def _smooth_path(
 
     return smoothed
 
+def path_is_blocked(grid, safe_grid, pose, path):
+    """현재 위치부터 남은 path가 최신 safe_grid에서 막혔는지 확인한다."""
+
+    if path is None:
+        return True
+
+    if not path:
+        return False
+
+    # 현재 로봇 위치를 grid 좌표로 변환
+    current = grid.world_to_grid(
+        pose.x,
+        pose.y,
+    )
+
+    if current is None:
+        return True
+
+    current = tuple(current)
+
+    if not _in_bounds(safe_grid.shape, current):
+        return True
+
+    # 현재 로봇 위치는 출발점이므로 통행 가능하게 취급
+    checking_grid = safe_grid.copy()
+    checking_grid[current[0], current[1]] = False
+
+    previous = current
+
+    # 현재 위치 -> 첫 waypoint
+    # waypoint -> 다음 waypoint
+    # 모든 구간을 검사
+    for waypoint in path:
+
+        waypoint_cell = grid.world_to_grid(
+            waypoint[0],
+            waypoint[1],
+        )
+
+        if waypoint_cell is None:
+            return True
+
+        waypoint_cell = tuple(waypoint_cell)
+
+        if not _in_bounds(
+            checking_grid.shape,
+            waypoint_cell,
+        ):
+            return True
+
+        # 기존에 있는 _line_of_sight() 재사용
+        if not _line_of_sight(
+            checking_grid,
+            previous,
+            waypoint_cell,
+        ):
+            return True
+
+        previous = waypoint_cell
+
+    return False
 
 def plan(
     grid,
