@@ -19,6 +19,12 @@ TIME_STEP = 32
 START_POSE = None
 # TODO(통합): 안전 지도 구현 후 로봇 외곽의 안전거리(m)를 결정한다.
 SAFETY_CLEARANCE_M = 0.0
+# 확인된 보정/대응 기준을 제공하기 전에는 위치 추정과 목표 등록을 대기한다.
+PERCEPTION_CALIBRATION = None
+PERCEPTION_ASSOCIATION = None
+TARGET_MATCH_DISTANCE_M = None
+# 카메라가 매 TIME_STEP에 갱신되고 now가 영상 관측 시각임을 확인한 뒤 활성화.
+CAMERA_TIME_CONFIRMED = False
 
 
 def main():
@@ -51,6 +57,11 @@ def main():
 
     localization = Localization(initial_pose=START_POSE)
     grid = OccupancyGrid(rows=201, cols=201)
+    selector = exploration.FrontierSelector()
+    diagnostics = exploration.Diagnostics()
+    registry = (perception.TargetRegistry(TARGET_MATCH_DISTANCE_M)
+                if TARGET_MATCH_DISTANCE_M is not None else None)
+    pose = localization.pose
     controller_dir = Path(__file__).resolve().parent
     maps_dir = controller_dir / 'maps'
     logs_dir = controller_dir / 'logs'
@@ -95,22 +106,27 @@ def main():
                 # 2. A: Mapping
                 grid.update(pose, lidar_points)
                 safe_grid = grid.make_safe_grid(SAFETY_CLEARANCE_M)
-                if now >= next_map_time:
-                    grid.save_png(map_path)
-                    write_log(f't={now:.2f}s map_saved={map_path}')
-                    next_map_time += 5.0
-
                 # 3. B: 타겟 검출 및 탐색 목표 선택
-                detection = perception.detect(
+                image = perception.camera_image_to_bgr(
                     camera_image, camera.getWidth(), camera.getHeight())
-                if detection is not None:
-                    goal = perception.locate_target(
-                        detection, pose, lidar_points)
+                detections = [] if image is None else perception.detect_targets(image)
+                located_count = 0
+                if PERCEPTION_CALIBRATION is None or PERCEPTION_ASSOCIATION is None:
+                    perception_state = 'WAIT_CALIBRATION'
+                elif not CAMERA_TIME_CONFIRMED:
+                    perception_state = 'WAIT_CAMERA_TIME'
                 else:
-                    goal = exploration.choose_goal(
-                        grid, safe_grid, pose)
-
-                # TODO(통합): 목표 유지·방문 목록·시작점 복귀 상태를 관리한다.
+                    timing = perception.ObservationTimes(now, now, tuple(
+                        getattr(point, 'time', math.nan) for point in lidar_points))
+                    observations = [(detection, perception.locate_target(
+                        detection, lidar_points, pose, PERCEPTION_CALIBRATION,
+                        association=PERCEPTION_ASSOCIATION, timing=timing)) for detection in detections]
+                    located_count = sum(position is not None for _, position in observations)
+                    perception_state = 'READY' if registry is not None else 'WAIT_REGISTRY_CONFIG'
+                    if registry is not None:
+                        registry.update(observations, now)
+                # 물체 목록은 관측만 연결. 접근 목표·방문 조건 확정 후 임무 전환을 추가한다.
+                goal = selector.choose(grid, safe_grid, pose, now, allow_switch=False)
 
                 # 4. C: 전역 경로 생성
                 if goal is None:
@@ -189,7 +205,8 @@ def main():
                 left_motor.setVelocity(left_speed)
                 right_motor.setVelocity(right_speed)
 
-                # 7. 시뮬레이션 시간 1초 간격 로그
+                # 7. 이동거리는 매 주기 누적하고 진단 로그는 내부에서 1초 간격으로 출력.
+                diagnostics.update(now, grid, safe_grid, pose, selector.goal, write_log, selector=selector)
                 if now >= next_log_time:
                     distance_text = (
                         'clear' if math.isinf(front_distance)
@@ -200,14 +217,25 @@ def main():
                         f't={now:.2f}s state={state} '
                         f'front={distance_text} '
                         f'pose=({pose.x:+.2f}, {pose.y:+.2f}, '
-                        f'{math.degrees(pose.theta):+.1f}deg)'
+                        f'{math.degrees(pose.theta):+.1f}deg) '
+                        f'goal={selector.goal} detections={len(detections)} located={located_count} '
+                        f'targets={len(registry.targets) if registry is not None else 0} '
+                        f'perception={perception_state}'
                     )
 
                     next_log_time += 1.0
+                if now >= next_map_time:
+                    diagnostics.save_png(map_path, grid, pose)
+                    write_log(f't={now:.2f}s map_saved={map_path}')
+                    next_map_time += 5.0
 
         finally:
             # 종료 시 마지막 지도도 같은 파일에 저장한다.
-            grid.save_png(map_path)
+            if diagnostics.snapshot is not None:
+                diagnostics.update(robot.getTime(), grid, safe_grid, pose, selector.goal, write_log, selector=selector)
+                diagnostics.save_png(map_path, grid, pose)
+            else:
+                grid.save_png(map_path)
             write_log(
                 f't={robot.getTime():.2f}s '
                 f'map_saved={map_path} final'

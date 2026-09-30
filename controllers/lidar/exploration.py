@@ -260,7 +260,7 @@ class FrontierSelector:
         self.goal = None
         return True
 
-    def choose(self, grid, safe_grid, pose, now):
+    def choose(self, grid, safe_grid, pose, now, *, allow_switch=True):
         """최신 지도에서 현재 목표도 재평가하고 변경 기준을 적용한다."""
         self._time(now)
         self.visits = [(point, time) for point, time in self.visits
@@ -279,8 +279,8 @@ class FrontierSelector:
             self.reason = self._pending_reason or ('실패 목표 재시도 대기' if self.candidates else '유효한 후보 없음')
         else:
             best = min(eligible, key=_rank)
-            if current is not None and best.score <= current.score + self.config.switch_margin:
-                self.reason = '현재 목표 유지: 점수 개선 폭이 변경 기준 이하'
+            if current is not None and (not allow_switch or best.score <= current.score + self.config.switch_margin):
+                self.reason = '유효한 현재 목표 유지' if not allow_switch else '현재 목표 유지: 점수 개선 폭이 변경 기준 이하'
             else:
                 self.goal = best.goal
                 self.reason = (self._pending_reason or ('첫 목표 선택' if previous is None
