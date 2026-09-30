@@ -51,28 +51,24 @@ def main():
 
     localization = Localization(initial_pose=START_POSE)
     grid = OccupancyGrid(rows=201, cols=201)
-
     controller_dir = Path(__file__).resolve().parent
     maps_dir = controller_dir / 'maps'
     logs_dir = controller_dir / 'logs'
     maps_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
-
     map_path = maps_dir / 'map.png'
     log_name = f"run_{datetime.now():%Y%m%d_%H%M%S_%f}_{os.getpid()}.log"
     log_path = logs_dir / log_name
-
     next_map_time = 5.0
     next_log_time = 0.0
 
-    # 전역 경로 재계획 상태
+    # C: 전역 경로 재계획 상태
     current_path = None
     planned_goal = None
     last_plan_time = -math.inf
     REPLAN_RETRY_INTERVAL = 0.5
 
     with log_path.open('w', encoding='utf-8', buffering=1) as log_file:
-
         def write_log(message):
             """콘솔과 실행 로그에 같은 메시지를 기록한다."""
             print(message, flush=True)
@@ -93,18 +89,12 @@ def main():
 
                 # 1. A: Localization
                 pose = localization.update(
-                    left_angle,
-                    right_angle,
-                    gyro_values,
-                    acceleration,
-                    north,
-                    now
-                )
+                    left_angle, right_angle,
+                    gyro_values, acceleration, north, now)
 
                 # 2. A: Mapping
                 grid.update(pose, lidar_points)
                 safe_grid = grid.make_safe_grid(SAFETY_CLEARANCE_M)
-
                 if now >= next_map_time:
                     grid.save_png(map_path)
                     write_log(f't={now:.2f}s map_saved={map_path}')
@@ -112,23 +102,13 @@ def main():
 
                 # 3. B: 타겟 검출 및 탐색 목표 선택
                 detection = perception.detect(
-                    camera_image,
-                    camera.getWidth(),
-                    camera.getHeight()
-                )
-
+                    camera_image, camera.getWidth(), camera.getHeight())
                 if detection is not None:
                     goal = perception.locate_target(
-                        detection,
-                        pose,
-                        lidar_points
-                    )
+                        detection, pose, lidar_points)
                 else:
                     goal = exploration.choose_goal(
-                        grid,
-                        safe_grid,
-                        pose
-                    )
+                        grid, safe_grid, pose)
 
                 # TODO(통합): 목표 유지·방문 목록·시작점 복귀 상태를 관리한다.
 
@@ -138,20 +118,20 @@ def main():
                     planned_goal = None
 
                 else:
-                    # 기존 경로를 만들 때 사용했던 goal과
-                    # 현재 goal이 달라졌는지 확인한다.
+                    # 처음 goal이 생겼거나 이전 goal과 달라진 경우
                     goal_changed = (
                         planned_goal is None
                         or goal != planned_goal
                     )
 
-                    # 최신 safe_grid에서 현재 경로가
-                    # 더 이상 통과 가능한지 확인한다.
+                    # 기존 경로가 최신 safe_grid에서 막혔는지 확인
                     path_blocked = (
                         current_path is not None
                         and global_planning.path_is_blocked(
-                            current_path,
-                            safe_grid
+                            grid,
+                            safe_grid,
+                            pose,
+                            current_path
                         )
                     )
 
@@ -162,18 +142,20 @@ def main():
                     )
 
                     if need_replan:
-                        # goal 변경 또는 기존 경로 차단은 즉시 재계획한다.
+                        # goal 변경 또는 path 차단은 즉시 재계획
                         immediate_replan = (
                             goal_changed
                             or path_blocked
                         )
 
-                        # 이전 A*가 실패해서 current_path가 None인 경우에는
-                        # 매 32 ms마다 반복하지 않고 일정 간격으로 재시도한다.
-                        if (
-                            immediate_replan
-                            or now - last_plan_time >= REPLAN_RETRY_INTERVAL
-                        ):
+                        # 이전 planning이 실패했다면
+                        # 매 loop가 아니라 0.5초마다 재시도
+                        retry_ready = (
+                            now - last_plan_time
+                            >= REPLAN_RETRY_INTERVAL
+                        )
+
+                        if immediate_replan or retry_ready:
                             current_path = global_planning.plan(
                                 grid,
                                 safe_grid,
@@ -188,45 +170,29 @@ def main():
 
                 # 5. C: 근거리 주행 및 충돌 회피
                 linear, angular = 0.0, 0.0
-
                 if goal is None:
                     state = 'WAIT_GOAL'
-
                 elif path is None:
                     state = 'WAIT_PATH'
-
                 else:
                     linear, angular, state = local_planning.command(
-                        pose,
-                        path,
-                        lidar_points
-                    )
-
+                        pose, path, lidar_points)
                     if state != 'MOVING':
                         linear, angular = 0.0, 0.0
 
-                front_distance = (
-                    local_planning.nearest_front_obstacle(
-                        lidar_points
-                    )
-                )
+                front_distance = local_planning.nearest_front_obstacle(
+                    lidar_points)
 
                 # 6. 모터 명령
-                left_speed, right_speed = (
-                    local_planning.wheel_speeds(
-                        linear,
-                        angular
-                    )
-                )
-
+                left_speed, right_speed = local_planning.wheel_speeds(
+                    linear, angular)
                 left_motor.setVelocity(left_speed)
                 right_motor.setVelocity(right_speed)
 
                 # 7. 시뮬레이션 시간 1초 간격 로그
                 if now >= next_log_time:
                     distance_text = (
-                        'clear'
-                        if math.isinf(front_distance)
+                        'clear' if math.isinf(front_distance)
                         else f'{front_distance:.2f}m'
                     )
 
@@ -242,7 +208,6 @@ def main():
         finally:
             # 종료 시 마지막 지도도 같은 파일에 저장한다.
             grid.save_png(map_path)
-
             write_log(
                 f't={robot.getTime():.2f}s '
                 f'map_saved={map_path} final'
